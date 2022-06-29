@@ -47,11 +47,14 @@ function extractAsCSV(obj) {
 export function writeOverviewCSV(i, i_max, obj, csv) {
 
   const filename = 'Overview.csv';
-  var row;
+
+  var rows;
+
   const header = [
     `Prices from CoinGecko & Staking Rewards from Subscan.io\n` +
-    `Address,Network,Name,Ticker,Number of Tokens,Value in ${obj.currency}`
+    `Day,Price in ${obj.currency},Daily Volume in ${obj.currency},Staking Rewards in ${obj.ticker},Number of Payouts,Value in Fiat`
   ];
+
 
   /*
     We check here if there were any rewards in the obj. If not, we do not want to write a line into
@@ -61,18 +64,24 @@ export function writeOverviewCSV(i, i_max, obj, csv) {
   */
 
   if (obj.message == 'No rewards found for this address') {
-    row = '';
+    rows = '';
   } else {
-    row = `${obj.address},${obj.network.toUpperCase()},${obj.name},${obj.ticker},${obj.totalAmountHumanReadable},${obj.totalValueFiat}\n`;
+  	rows = obj.data.list
+    		.filter(entry => entry.numberPayouts > 0)
+    		.map(entry => `${obj.name}, ${entry.day}, ${entry.price}, ${entry.volume}, ${entry.amountHumanReadable}, ${entry.numberPayouts}, ${entry.valueFiat}`);
   }
+
+
 
   // If it is the first address that has been parsed, we want to create the overview csv
   if (i == 0) {
-    csv = header.concat(row).join("\n");
+    csv = header.concat(rows).join("\n");
   }
 
-  if (i > 0) {
-    csv += row;
+console.log(rows);
+
+  if (i > 0 && obj.message != 'No rewards found for this address') {
+    csv += '\n' + rows.join("\n");
   }
 
   if (i == (i_max-1)) {
